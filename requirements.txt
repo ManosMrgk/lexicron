@@ -1,5 +1,4 @@
 fastapi
-apscheduler
 python-dotenv
 requests
 beautifulsoup4
