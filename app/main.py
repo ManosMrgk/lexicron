@@ -7,7 +7,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from app.utils.wiktionary_wotd import get_word_of_the_day
-from app.utils.email_utils import send_email, RECIPIENTS
+from app.utils.email_utils import send_email, RECIPIENTS, SEND_HOUR, SEND_MINUTES
 from app.utils.email_template import build_wotd_newsletter_body
 
 athens_tz = ZoneInfo("Europe/Athens")
@@ -21,7 +21,7 @@ async def lifespan(app:FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-@scheduler.scheduled_job('cron', hour=12, minute=00)
+@scheduler.scheduled_job('cron', hour=SEND_HOUR, minute=SEND_MINUTES)
 async def sent_daily_email():
     word = get_word_of_the_day()
     body = build_wotd_newsletter_body(word=word.word, uri=word.uri)

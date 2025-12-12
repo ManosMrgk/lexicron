@@ -12,6 +12,8 @@ PASSWORD = os.getenv("SMTP_PASSWORD")
 SERVER = os.getenv("SMTP_SERVER")
 PORT = int(os.getenv("SMTP_PORT", "465"))
 RECIPIENTS = os.getenv("RECIPIENTS",None)
+SEND_HOUR = os.getenv("SEND_HOUR","12")
+SEND_MINUTES = os.getenv("SEND_MINUTES","25")
 
 if not RECIPIENTS:
     raise ValueError("No receivers set.")
