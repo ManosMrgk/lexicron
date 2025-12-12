@@ -1,33 +1,31 @@
-import datetime
-from fastapi import FastAPI
-from contextlib import asynccontextmanager
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from zoneinfo import ZoneInfo
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import os
+import asyncio
+from fastapi import FastAPI, Header, HTTPException
 from app.utils.wiktionary_wotd import get_word_of_the_day
-from app.utils.email_utils import send_email, RECIPIENTS, SEND_HOUR, SEND_MINUTES
+from app.utils.email_utils import send_email, RECIPIENTS
 from app.utils.email_template import build_wotd_newsletter_body
 
-athens_tz = ZoneInfo("Europe/Athens")
-scheduler = AsyncIOScheduler(timezone=athens_tz)
+app = FastAPI()
 
-@asynccontextmanager
-async def lifespan(app:FastAPI):
-    scheduler.start()
-    yield
-    scheduler.shutdown()
+@app.get("/api/cron/send-daily")
+async def send_daily_email(authorization: str | None = Header(default=None)):
+    secret = os.getenv("CRON_SECRET")
+    if secret and authorization != f"Bearer {secret}":
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
-app = FastAPI(lifespan=lifespan)
-
-@scheduler.scheduled_job('cron', hour=SEND_HOUR, minute=SEND_MINUTES, misfire_grace_time=600)
-async def sent_daily_email():
     word = get_word_of_the_day()
     body = build_wotd_newsletter_body(word=word.word, uri=word.uri)
-    send_email(to=RECIPIENTS, subject="Lexicron - Word of the day", body=body, html=True)
-    print("Email sent")
 
-@app.get("/health")
+    await asyncio.to_thread(
+        send_email,
+        to=RECIPIENTS,
+        subject="Lexicron - Word of the day",
+        body=body,
+        html=True,
+    )
+    return {"ok": True, "sent": True}
+
+
+@app.get("/")
 async def test():
     return "OK"
