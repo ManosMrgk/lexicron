@@ -21,7 +21,7 @@ async def lifespan(app:FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-@scheduler.scheduled_job('cron', hour=SEND_HOUR, minute=SEND_MINUTES)
+@scheduler.scheduled_job('cron', hour=SEND_HOUR, minute=SEND_MINUTES, misfire_grace_time=600)
 async def sent_daily_email():
     word = get_word_of_the_day()
     body = build_wotd_newsletter_body(word=word.word, uri=word.uri)
